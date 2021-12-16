@@ -17,13 +17,11 @@ import traceback
 
 def human_size(size):
     """Return the human-readable size of a number of bytes."""
-    for s in ["B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]:
+    for s in ['B', 'kiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']:
         if abs(size) < 1024:
-            break
+            return f'{size:.2f}{s}'
 
         size = int(size / 1024)
-
-    return "{}{}".format(size, s)
 
 
 def have_file(file, size, md5):
