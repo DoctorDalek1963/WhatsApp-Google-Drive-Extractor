@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
 """A script to download WhatsApp backups from Google Drive."""
 
-"""
-usage: python3 {} help|info|list|sync
-
-    help    Show this help.
-    info    Show WhatsApp backups.
-    list    Show WhatsApp backup files.
-    sync    Download all WhatsApp backups.
-"""
-
 from base64 import b64decode
 from getpass import getpass
 from multiprocessing.pool import ThreadPool
@@ -247,7 +238,12 @@ def backup_info(backup):
 def main(args):
     """Run the desired action, as specified by args. The action can be any of info, list, or sync."""
     if len(args) != 2 or args[1] not in ("info", "list", "sync"):
-        quit(__doc__.format(args[0]))
+        print(f'\nusage: python3 {args[0]} help|info|list|sync\n')
+        print('info    Show WhatsApp backups.')
+        print('list    Show WhatsApp backup files.')
+        print('sync    Download all WhatsApp backups.\n')
+
+        sys.exit(0)
 
     if not os.path.isfile("settings.cfg"):
         create_settings_file()
