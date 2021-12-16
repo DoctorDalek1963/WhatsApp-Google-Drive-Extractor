@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """A script to download WhatsApp backups from Google Drive."""
 
-from base64 import b64decode
-from getpass import getpass
-from multiprocessing.pool import ThreadPool
-from textwrap import dedent
 import configparser
 import gpsoauth
 import hashlib
@@ -13,6 +9,12 @@ import os
 import requests
 import sys
 import traceback
+from base64 import b64decode
+from configparser import NoSectionError, NoOptionError
+from getpass import getpass
+from multiprocessing.pool import ThreadPool
+from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
+from textwrap import dedent
 
 
 def human_size(size):
@@ -80,16 +82,16 @@ class WaBackup:
             )
 
             response.raise_for_status()
-        except requests.exceptions.HTTPError as err_http:
+        except HTTPError as err_http:
             print("\n\nHttp Error:", err_http)
 
-        except requests.exceptions.ConnectionError as err_conn:
+        except ConnectionError as err_conn:
             print("\n\nError Connecting:", err_conn)
 
-        except requests.exceptions.Timeout as err_timeout:
+        except Timeout as err_timeout:
             print("\n\nTimeout Error:", err_timeout)
 
-        except requests.exceptions.RequestException as err_req:
+        except RequestException as err_req:
             print("\n\nOops: Something Else", err_req)
 
         return response
@@ -194,7 +196,7 @@ def get_configs():
             "password": password
         }
 
-    except (configparser.NoSectionError, configparser.NoOptionError):
+    except (NoSectionError, NoOptionError):
         quit("The 'settings.cfg' file is missing or corrupt!")
 
 
