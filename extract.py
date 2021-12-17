@@ -9,6 +9,7 @@ import sys
 import traceback
 from base64 import b64decode
 from configparser import NoSectionError, NoOptionError
+from datetime import datetime
 from getpass import getpass
 from multiprocessing.pool import ThreadPool
 from textwrap import dedent
@@ -20,16 +21,21 @@ import requests
 from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
 
 
+def human_datetime(iso_datetime: str) -> str:
+    """Return the nicely human-readable version of a ISO-8601 datetime string."""
+    return datetime.fromisoformat(iso_datetime.replace('Z', '')).strftime('%H:%M on %d %b %Y')
+
+
 def human_size(size: int) -> str:
     """Return the human-readable size of a number of bytes."""
     for s in ['B', 'kiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB']:
         if abs(size) < 1024:
-            return f'{size:.2f}{s}'
+            return f'{size:.2f} {s}'
 
-        size = int(size / 1024)
+        size /= 1024
 
     # If we didn't hit a good size, then just go with the max
-    return f'{size:.2f}YiB'
+    return f'{size:.2f} YiB'
 
 
 def have_file(file: str, size: int, md5: bytes) -> bool:
@@ -166,7 +172,7 @@ class WaBackup:
 
                 cksums.write(f'{md5_hash.hex()} *{name}\n')
 
-        print(f'\n{num_files} files ({human_size(total_size)})')
+        print(f'\n\n{num_files} files ({human_size(total_size)})')
 
 
 def get_configs() -> dict[str, str]:
@@ -220,8 +226,9 @@ def backup_info(backup: dict[str, str]) -> None:
     for size in 'backupSize', 'chatdbSize', 'mediaSize', 'videoSize':
         metadata[size] = human_size(int(metadata[size]))
 
-    print(f'Backup {os.path.split(backup["name"])[-1]} Size: ({metadata["backupSize"]})',
-          f'Upload Time: {backup["updateTime"]}')
+    print(f'\nBackup: {os.path.split(backup["name"])[-1]}')
+    print(f'Size: ({metadata["backupSize"]}) Upload Time: {human_datetime(backup["updateTime"])}\n')
+
     print(f'  WhatsApp version  : {metadata["versionOfAppWhenBackup"]}')
 
     try:
@@ -233,6 +240,7 @@ def backup_info(backup: dict[str, str]) -> None:
     print(f'  Media files       : {metadata["numOfMediaFiles"]} ({metadata["mediaSize"]})')
     print(f'  Photos            : {metadata["numOfPhotos"]}')
     print(f'  Videos            : included={metadata["includeVideosInBackup"]} ({metadata["videoSize"]})')
+    print()
 
 
 def main(args: list[str]) -> None:
@@ -267,6 +275,7 @@ def main(args: list[str]) -> None:
             if not answer or answer[0].lower() != 'y':
                 continue
 
+            print()
             num_files = 0
             total_size = 0
 
@@ -274,7 +283,7 @@ def main(args: list[str]) -> None:
                 try:
                     num_files += 1
                     total_size += int(file['sizeBytes'])
-                    print(os.path.join(file['name'].split("/")[3:]))
+                    print(os.path.join(*file['name'].split("/")[3:]))
 
                 except (KeyError, ValueError):
                     print(dedent(f'''
@@ -291,7 +300,7 @@ def main(args: list[str]) -> None:
                     input('Press the <Enter> key to continue...')
                     continue
 
-            print(f'{num_files} files ({human_size(total_size)})')
+            print(f'\n{num_files} files ({human_size(total_size)})\n')
 
     elif args[1] == 'sync':
         with open('md5sum.txt', 'w', encoding='utf-8', buffering=1) as cksums:
@@ -302,16 +311,19 @@ def main(args: list[str]) -> None:
                     if not answer or answer[0].lower() != 'y':
                         continue
 
-                    print(f'Backup Size: {human_size(int(backup["sizeBytes"]))} Upload Time: {backup["updateTime"]}')
+                    print(f'\nBackup Size: {human_size(int(backup["sizeBytes"]))} '
+                          f'Upload Time: {human_datetime(backup["updateTime"])}\n')
 
                     wa_backup.fetch_all(backup, cksums)
+
+                    print()
 
                 except (KeyError, ValueError):
                     print(dedent(f'''
                     #####
 
                     Warning: Unexpected error in backup: {backup["name"].split("/")[-1]}
-                    (Size: {human_size(int(backup["sizeBytes"]))} Upload Time: {backup["updateTime"]})
+                    (Size: {human_size(int(backup["sizeBytes"]))} Upload Time: {human_datetime(backup["updateTime"])})
 
                     Exception: {traceback.format_exc()}
 
