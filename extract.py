@@ -13,7 +13,7 @@ from datetime import datetime
 from getpass import getpass
 from multiprocessing.pool import ThreadPool
 from textwrap import dedent
-from typing import Any, Iterator, Optional, TextIO
+from typing import Any, Iterator, Optional, TextIO, Union
 from urllib import parse
 
 import gpsoauth
@@ -26,7 +26,7 @@ def human_datetime(iso_datetime: str) -> str:
     return datetime.fromisoformat(iso_datetime.replace('Z', '')).strftime('%H:%M on %d %b %Y')
 
 
-def human_size(size: int) -> str:
+def human_size(size: Union[int, float]) -> str:
     """Return the human-readable size of a number of bytes."""
     for s in ['B', 'kiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB']:
         if abs(size) < 1024:
